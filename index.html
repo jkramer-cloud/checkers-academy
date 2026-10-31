@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071426">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="description" content="Checkers Academy Deluxe: a luxury navy-and-gold strategy game with computer opponents, 12 puzzles, and guided lessons.">
+  <title>Checkers Academy Deluxe | Naches Learning Hub</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="deluxe.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-theme="royal" data-pieces="royal">
+  <div class="site-shell">
+    <header class="topbar">
+      <a class="brand" href="#play" aria-label="Checkers Academy home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span><strong>CHECKERS<span class="brand-accent"> ACADEMY</span></strong><small>DELUXE EDITION <span class="brand-star">✦</span> THINK LIKE A CHAMPION</small></span>
+      </a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <button class="nav-btn active" data-view="play">Play</button>
+        <button class="nav-btn" data-view="puzzles">Puzzle Lab</button>
+        <button class="nav-btn" data-view="learn">Learn</button>
+        <button class="nav-btn" data-view="locker">Locker</button>
+      </nav>
+      <div class="top-progress" aria-label="Academy experience"><div class="level-emblem" id="level-badge">1</div><div class="level-copy"><b id="rank-name">Rookie</b><span id="xp-label">0 / 80 XP</span><div class="progress-track"><div id="xp-fill"></div></div></div></div>
+    </header>
+
+    <main>
+      <section id="view-play" class="view active" aria-label="Checkers game">
+        <div class="view-head"><div><div class="eyebrow"><span class="eyebrow-sigil">✦</span> THE ROYAL STRATEGY ARENA <span class="eyebrow-sigil">✦</span></div><h1>Make your move. <em>Claim your crown.</em></h1><p>A timeless game of strategy, reimagined in navy and gold.</p></div><div class="header-tag"><span class="live-dot"></span> DELUXE EDITION <span class="header-divider">/</span> AMERICAN CHECKERS</div></div>
+        <div class="arena-grid">
+          <aside class="control-panel surface">
+            <div class="panel-label">MATCH SETUP</div>
+            <h2>Choose your game</h2>
+            <div class="choice-pair" role="group" aria-label="Opponent"><button id="mode-ai" class="choice active" aria-pressed="true"><span class="choice-icon">◎</span> Computer</button><button id="mode-local" class="choice" aria-pressed="false"><span class="choice-icon">♟</span> Two players</button></div>
+            <div id="ai-options">
+              <label class="field-label" for="difficulty">Computer difficulty</label>
+              <select id="difficulty"><option value="rookie">Rookie · learning</option><option value="tactician" selected>Tactician · balanced</option><option value="master">Master · challenging</option><option value="champion">Champion · expert</option></select>
+              <div class="field-label">Play as</div>
+              <div class="choice-pair compact" role="group" aria-label="Your color"><button class="choice active" id="side-black" aria-pressed="true"><span class="piece-dot black"></span> Black</button><button class="choice" id="side-red" aria-pressed="false"><span class="piece-dot red"></span> Red</button></div>
+            </div>
+            <button id="new-game" class="primary-action">↻ &nbsp; New game</button>
+            <div class="panel-line"></div>
+            <div class="panel-label">YOUR TOOLS</div>
+            <div class="tool-grid"><button id="undo-btn" class="tool-button"><span>↶</span> Undo</button><button id="hint-btn" class="tool-button"><span>✧</span> Hint</button><button id="resign-btn" class="tool-button"><span>⚑</span> Resign</button><button id="sound-btn" class="tool-button" aria-pressed="true"><span>♫</span> Sound on</button></div>
+            <button id="coords-btn" class="coords-toggle" aria-pressed="true">▦  Coordinates on</button><div class="mini-lesson"><div class="mini-icon">✦</div><div><b>Coach's corner</b><p id="coach-tip">The middle squares give you more options. Look for safe ways to advance.</p></div></div>
+          </aside>
+
+          <section class="board-column" aria-label="Game board">
+            <div class="game-banner surface"><div class="player-sign"><span class="side-token red"></span><div><b id="red-label">Computer · Red</b><span id="red-count">12 pieces</span></div></div><div class="turn-status" id="turn-status" role="status" aria-live="polite">Black to move</div></div>
+            <div class="board-frame" id="board-frame"><div class="board-corner top-left">✦</div><div class="board-corner top-right">✦</div><div class="board-corner bottom-left">✦</div><div class="board-corner bottom-right">✦</div><div id="board" class="board" role="grid" aria-label="Checkers board"></div><div id="board-announcement" class="board-announcement hidden" aria-live="polite"></div></div>
+            <div class="game-banner bottom surface"><div class="player-sign"><span class="side-token black"></span><div><b id="black-label">You · Black</b><span id="black-count">12 pieces</span></div></div><div class="game-caption" id="game-caption">Black moves first</div></div>
+            <div class="board-actions"><button id="rules-toggle" class="text-action">ⓘ &nbsp; Rules and controls</button><button id="flip-board" class="text-action">⇅ &nbsp; Rotate board</button></div>
+            <div id="rules-panel" class="rules-panel surface hidden"><b>How to play</b><p>Move diagonally on dark squares. Regular pieces move and capture forward; kings move and capture both ways. If a jump is available, you must take it and finish every possible jump in that sequence. Reach the far row to make a king. Win by capturing all opposing pieces or leaving the opponent with no legal move. Black moves first.</p><p>Choose a highlighted piece, then a glowing destination. Click a piece or destination, or use Tab and Enter. The Undo button rewinds the last move (or a full round against the computer).</p></div>
+          </section>
+
+          <aside class="intel-panel surface">
+            <div class="intel-head"><div><div class="panel-label">THE MATCH LEDGER</div><h2>Move history</h2></div><span class="move-pill" id="move-counter">MOVE 01</span></div>
+            <div id="move-history" class="move-history"><div class="history-empty">Your opening move is waiting.</div></div>
+            <div class="panel-line"></div>
+            <div class="panel-label">YOUR ROYAL RECORD</div>
+            <div class="stat-list"><div><span>Computer wins</span><b id="stat-wins">0</b></div><div><span>Puzzles solved</span><b id="stat-puzzles">0 / 8</b></div><div><span>Games played</span><b id="stat-games">0</b></div><div><span>Best win streak</span><b id="stat-streak">0</b></div></div>
+            <div class="achievement-preview"><div class="achievement-top"><span>★</span><b>Earn your next badge</b></div><p id="badge-goal">Solve your first tactical puzzle to earn the First Move badge.</p><button id="open-puzzles" class="light-link">Go to Puzzle Lab →</button></div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="view-puzzles" class="view" aria-label="Tactical checkers puzzles">
+        <div class="view-head"><div><div class="eyebrow">TACTICAL THINKING</div><h1>Puzzle Lab<span class="highlight-dot">.</span></h1><p>Small positions. Big ideas. Find the best move to earn academy XP.</p></div><div class="header-tag" id="puzzle-head-total">0 OF 12 COMPLETE</div></div>
+        <div class="puzzle-grid"><div class="puzzle-list surface"><div class="panel-label">YOUR CHALLENGES</div><h2>Practice makes a champion</h2><div id="puzzle-cards"></div></div><div class="puzzle-stage"><div class="puzzle-heading surface"><span id="puzzle-level-tag">PUZZLE 01</span><div><h2 id="puzzle-title">The First Jump</h2><p id="puzzle-description">Capture an opposing piece.</p></div></div><div class="puzzle-board-wrap"><div id="puzzle-board" class="board puzzle-board" role="grid" aria-label="Practice position"></div><div id="puzzle-overlay" class="puzzle-overlay hidden"></div></div><div class="puzzle-footer surface"><div id="puzzle-message" role="status" aria-live="polite">Select your piece to begin.</div><div class="puzzle-footer-buttons"><button id="puzzle-hint" class="secondary-action">✧ Hint</button><button id="puzzle-reset" class="secondary-action">↻ Retry</button><button id="puzzle-next" class="primary-action small">Next puzzle →</button></div></div></div><aside class="puzzle-coach surface"><div class="panel-label">COACH'S NOTEBOOK</div><h2>Find the winning idea</h2><p id="puzzle-coach-text"></p><div class="tactical-legend"><div><span class="legend-circle selection"></span> Selected piece</div><div><span class="legend-circle move"></span> Legal move</div><div><span class="legend-circle capture"></span> Capture</div></div><div class="practice-note"><b>Think before you click.</b><p>Can you capture? What happens after the first jump? Could a king reach a square a regular piece cannot?</p></div></aside></div>
+      </section>
+
+      <section id="view-learn" class="view" aria-label="Checkers strategy lessons"><div class="view-head"><div><div class="eyebrow">LEARN THE GAME</div><h1>Strategy School<span class="highlight-dot">.</span></h1><p>Short, practical lessons you can use immediately on the board.</p></div><div class="header-tag">9 GUIDED LESSONS</div></div><div id="lesson-grid" class="lesson-grid"></div></section>
+      <section id="view-locker" class="view" aria-label="Board and piece customizations"><div class="view-head"><div><div class="eyebrow">YOUR ACADEMY</div><h1>The Locker<span class="highlight-dot">.</span></h1><p>Earn XP by practicing, then unlock new boards and pieces.</p></div><div class="header-tag" id="locker-total">LEVEL 1 · 0 XP</div></div><div class="locker-layout"><div class="surface locker-intro"><div class="large-level" id="locker-level">1</div><div><div class="eyebrow">YOUR PLAYER PROFILE</div><h2 id="locker-rank">Rookie Strategist</h2><p id="locker-experience">0 lifetime experience</p><div class="progress-track larger"><div id="locker-progress"></div></div></div></div><div class="surface locker-section"><div class="panel-label">BOARD COLLECTION</div><h2>Choose your arena</h2><div id="theme-options" class="cosmetic-grid"></div></div><div class="surface locker-section"><div class="panel-label">PIECE COLLECTION</div><h2>Choose your pieces</h2><div id="piece-options" class="cosmetic-grid"></div></div><div class="surface locker-section achievements"><div class="panel-label">ACHIEVEMENTS</div><h2>Academy badges</h2><div id="achievement-list"></div><button id="reset-progress" class="text-action danger">Reset saved academy progress</button></div></div></section>
+    </main>
+    <footer>CHECKERS ACADEMY DELUXE <span>✦</span> A NACHES LEARNING HUB EXPERIENCE <span>✦</span> PRIVATE, LOCAL PROGRESS</footer>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="modal" class="modal-backdrop hidden" role="presentation"><div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-icon" id="modal-icon">★</div><h2 id="modal-title">Nice work!</h2><p id="modal-text"></p><div class="modal-actions" id="modal-actions"></div></div></div>
+</body>
+</html>
