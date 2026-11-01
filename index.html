@@ -41,6 +41,10 @@
               <div class="field-label">Play as</div>
               <div class="choice-pair compact" role="group" aria-label="Your color"><button class="choice active" id="side-black" aria-pressed="true"><span class="piece-dot black"></span> Black</button><button class="choice" id="side-red" aria-pressed="false"><span class="piece-dot red"></span> Red</button></div>
             </div>
+            <div class="capture-setting" role="group" aria-label="Capture rule">
+              <label class="capture-switch-row" for="mandatory-captures"><span><strong>Mandatory captures</strong><small id="capture-rule-mode">ON · Standard rules</small></span><input id="mandatory-captures" type="checkbox" checked aria-describedby="capture-help"></label>
+              <p id="capture-help">ON: jump whenever possible. OFF: you may move normally instead. Once you start jumping, finish all available jumps with the same piece. Applies to both players and the computer.</p>
+            </div>
             <button id="new-game" class="primary-action">↻ &nbsp; New game</button>
             <div class="panel-line"></div>
             <div class="panel-label">YOUR TOOLS</div>
@@ -52,8 +56,8 @@
             <div class="game-banner surface"><div class="player-sign"><span class="side-token red"></span><div><b id="red-label">Computer · Red</b><span id="red-count">12 pieces</span></div></div><div class="turn-status" id="turn-status" role="status" aria-live="polite">Black to move</div></div>
             <div class="board-frame" id="board-frame"><div class="board-corner top-left">✦</div><div class="board-corner top-right">✦</div><div class="board-corner bottom-left">✦</div><div class="board-corner bottom-right">✦</div><div id="board" class="board" role="grid" aria-label="Checkers board"></div><div id="board-announcement" class="board-announcement hidden" aria-live="polite"></div></div>
             <div class="game-banner bottom surface"><div class="player-sign"><span class="side-token black"></span><div><b id="black-label">You · Black</b><span id="black-count">12 pieces</span></div></div><div class="game-caption" id="game-caption">Black moves first</div></div>
-            <div class="board-actions"><button id="rules-toggle" class="text-action">ⓘ &nbsp; Rules and controls</button><button id="flip-board" class="text-action">⇅ &nbsp; Rotate board</button></div>
-            <div id="rules-panel" class="rules-panel surface hidden"><b>How to play</b><p>Move diagonally on dark squares. Regular pieces move and capture forward; kings move and capture both ways. If a jump is available, you must take it and finish every possible jump in that sequence. Reach the far row to make a king. Win by capturing all opposing pieces or leaving the opponent with no legal move. Black moves first.</p><p>Choose a highlighted piece, then a glowing destination. Click a piece or destination, or use Tab and Enter. The Undo button rewinds the last move (or a full round against the computer).</p></div>
+            <p id="jump-prompt" class="jump-prompt hidden" role="status" aria-live="polite"></p><div class="board-actions"><button id="rules-toggle" class="text-action">ⓘ &nbsp; Rules and controls</button><button id="flip-board" class="text-action">⇅ &nbsp; Rotate board</button></div>
+            <div id="rules-panel" class="rules-panel surface hidden"><b>How to play</b><p>Move diagonally on dark squares. Regular pieces move and capture forward; kings move and capture both ways. With Mandatory captures ON, you must jump if a capture is available; OFF lets you make an ordinary move instead. In both modes, once a jump begins, continue every available jump with the same piece. If there is only one possible next jump, it continues automatically. If more than one route is possible, tap the glowing square you want. A regular checker that reaches the far king row ends its turn immediately, even if a backward jump would be possible as a king. Reach the far row to make a king. Win by capturing all opposing pieces or leaving the opponent with no legal move. Black moves first.</p><p>Choose a highlighted piece, then a glowing destination. Click a piece or destination, or use Tab and Enter. The Undo button rewinds the last move (or a full round against the computer).</p></div>
           </section>
 
           <aside class="intel-panel surface">

@@ -7,7 +7,7 @@
 const $ = id => document.getElementById(id);
 const FILES = 'abcdefgh';
 const KEY = 'naches-checkers-academy-deluxe-v1';
-const START_STATS = {xp:0,wins:0,losses:0,games:0,streak:0,bestStreak:0,solved:[],theme:'royal',pieces:'royal',sound:true,coordinates:true};
+const START_STATS = {xp:0,wins:0,losses:0,games:0,streak:0,bestStreak:0,solved:[],theme:'royal',pieces:'royal',sound:true,coordinates:true,mandatoryCaptures:true};
 function loadStats(){try{let v=JSON.parse(localStorage.getItem(KEY));if(v&&typeof v==='object')return {...START_STATS,...v,solved:Array.isArray(v.solved)?v.solved:[]};}catch(e){}return {...START_STATS};}
 let stats=loadStats();
 function saveStats(){try{localStorage.setItem(KEY,JSON.stringify(stats));}catch(e){}}
@@ -25,7 +25,7 @@ const clone=b=>b.slice();
 function makeStart(){const b=Array(64).fill(0);for(let i=0;i<64;i++)if(dark(i)){if(row(i)<3)b[i]=-1;else if(row(i)>4)b[i]=1;}return b;}
 function parsePosition(data){const b=Array(64).fill(0);for(const [kind,p] of [['black',1],['red',-1],['blackKings',2],['redKings',-2]])for(const place of (data[kind]||[])){const n=fromXY(place);if(n<0||!dark(n)||b[n])throw Error('Invalid puzzle square: '+place);b[n]=p;}return b;}
 function directions(piece){const s=Math.sign(piece);return Math.abs(piece)===2?[[-1,-1],[-1,1],[1,-1],[1,1]]:s===1?[[-1,-1],[-1,1]]:[[1,-1],[1,1]];}
-function getLegalMoves(board,side){
+function getLegalMoves(board,side,mandatoryCaptures=true){
   const jumps=[];
   function explore(b,at,p,path,captures){
     let found=false;
@@ -44,18 +44,18 @@ function getLegalMoves(board,side){
     if(!found&&captures.length)jumps.push({from:path[0],path:path.slice(1),captures:captures.slice(),promotes:false});
   }
   for(let i=0;i<64;i++)if(board[i]*side>0)explore(board,i,board[i],[],[]);
-  if(jumps.length)return jumps;
+  if(jumps.length&&mandatoryCaptures)return jumps;
   const steps=[];
   for(let i=0;i<64;i++)if(board[i]*side>0){for(const [dr,dc] of directions(board[i])){
     const r=row(i)+dr,c=col(i)+dc;
     if(inside(r,c)&&board[index(r,c)]===0)steps.push({from:i,path:[index(r,c)],captures:[],promotes:promote(board[i],r)!==board[i]});
   }}
-  return steps;
+  return jumps.concat(steps);
 }
 function applyMove(board,move){const b=clone(board),p=b[move.from],end=move.path[move.path.length-1];b[move.from]=0;for(const cap of move.captures)b[cap]=0;b[end]=promote(p,row(end));return b;}
 function formatMove(m){const join=m.captures.length?' × ':' – ';return [xy(m.from),...m.path.map(xy)].join(join)+(m.promotes?' ♛':'');}
 function pieceCount(board,side){return board.filter(p=>p*side>0).length;}
-function gameWinner(board,sideToPlay){if(pieceCount(board,sideToPlay)===0||getLegalMoves(board,sideToPlay).length===0)return -sideToPlay;return 0;}
+function gameWinner(board,sideToPlay,mandatoryCaptures=true){if(pieceCount(board,sideToPlay)===0||getLegalMoves(board,sideToPlay,mandatoryCaptures).length===0)return -sideToPlay;return 0;}
 
 /* A modest alpha-beta search with forced-capture move generation. */
 function evaluate(board,side){let score=0;for(let i=0;i<64;i++){
@@ -66,13 +66,13 @@ function evaluate(board,side){let score=0;for(let i=0;i<64;i++){
   if(c===0||c===7)v+=3;
   score+=s* v;
 }return score*side;}
-function aiChoose(board,side,difficulty){
-  const legal=getLegalMoves(board,side);if(!legal.length)return null;if(legal.length===1)return legal[0];
+function aiChoose(board,side,difficulty,mandatoryCaptures=true){
+  const legal=getLegalMoves(board,side,mandatoryCaptures);if(!legal.length)return null;if(legal.length===1)return legal[0];
   const depth={rookie:1,tactician:3,master:5,champion:6}[difficulty]||3;
   let nodes=0;const maxNodes=difficulty==='champion'?140000:difficulty==='master'?125000:25000;
   function search(b,s,d,a,beta){
     nodes++;
-    const moves=getLegalMoves(b,s);
+    const moves=getLegalMoves(b,s,mandatoryCaptures);
     if(!moves.length)return -100000-d;
     if(d<=0||nodes>maxNodes)return evaluate(b,s);
     moves.sort((x,y)=>(y.captures.length-x.captures.length)||Number(y.promotes)-Number(x.promotes));
@@ -137,14 +137,14 @@ const ui={mode:'ai',difficulty:'tactician',playerSide:1,flipped:false,puzzleInde
 function newGame(){
  turnSerial++;
  game={board:makeStart(),side:1,mode:ui.mode,playerSide:ui.playerSide,difficulty:ui.difficulty,
-  flipped:ui.mode==='ai'&&ui.playerSide===-1,selected:null,active:null,hint:null,history:[],logs:[],over:false,winner:0,lastMove:null,moves:0};
+  flipped:ui.mode==='ai'&&ui.playerSide===-1,mandatoryCaptures:stats.mandatoryCaptures!==false,aiAnimating:false,chainAnimating:false,selected:null,active:null,hint:null,history:[],logs:[],over:false,winner:0,lastMove:null,moves:0};
  renderGame();if(isAiTurn())scheduleAi();
 }
 function isAiTurn(){return game&&!game.over&&game.mode==='ai'&&game.side!==game.playerSide;}
 function isHumanTurn(){return game&&!game.over&&!isAiTurn();}
 function sideDisplay(s){if(game.mode==='local')return s===1?'Player 1 · Black':'Player 2 · Red';return s===game.playerSide?`You · ${sideName(s)}`:`Computer · ${sideName(s)}`;}
 function saveHistory(){game.history.push({board:clone(game.board),side:game.side,logsLength:game.logs.length,moves:game.moves,lastMove:game.lastMove?{...game.lastMove}:null});}
-function restoreHistory(item){game.board=item.board;game.side=item.side;game.logs.length=item.logsLength;game.moves=item.moves;game.lastMove=item.lastMove;game.over=false;game.winner=0;game.active=null;game.selected=null;game.hint=null;}
+function restoreHistory(item){game.board=item.board;game.side=item.side;game.logs.length=item.logsLength;game.moves=item.moves;game.lastMove=item.lastMove;game.over=false;game.winner=0;game.active=null;game.aiAnimating=false;game.chainAnimating=false;game.selected=null;game.candidates=[];game.hint=null;}
 function userUndo(){
  if(!game||game.over)return;turnSerial++;
  if(game.active){const h=game.history.pop();if(h)restoreHistory(h);renderGame();return;}
@@ -169,18 +169,40 @@ function moveStep(state,to,onComplete){
  const m=possible[0],piece=state.board[a.last];state.board[a.last]=0;state.board[to]=piece;
  if(m.captures.length){state.board[m.captures[a.step]]=0;sound('capture');}else sound('move');
  a.last=to;a.step++;a.options=possible;state.selected=to;
- if(a.step===m.path.length){state.board[to]=promote(piece,row(to));const full=m;state.active=null;state.selected=null;state.candidates=[];state.hint=null;onComplete(full);}
- else{state.hint=null;renderState(state);}
+ if(a.step===m.path.length){
+  const justCrowned=promote(piece,row(to))!==piece;
+  state.board[to]=promote(piece,row(to));const full=m;
+  state.active=null;state.chainAnimating=false;state.selected=null;state.candidates=[];state.hint=null;
+  onComplete(full);
+  // American checkers: reaching the king row ends a man's capture sequence.
+  if(state===game&&justCrowned&&full.captures.length)toast(`Crowned at ${xy(to)}! Reaching the king row ends this turn.`);
+ }
+ else{
+  state.hint=null;
+  const next=destinations(state);
+  if(state===game&&next.length===1){
+   // Automatic completion ONLY when there is no choice of landing square.
+   // In branching combinations, students choose their own next jump.
+   state.chainAnimating=true;
+   renderState(state);
+   const token=turnSerial, active=a, forced=next[0];
+   setTimeout(()=>{
+    if(token!==turnSerial||state!==game||game.active!==active||game.over)return;
+    game.chainAnimating=false;
+    moveStep(game,forced,onComplete);
+   },460);
+  }else{state.chainAnimating=false;renderState(state);}
+ }
  return true;
 }
 function renderState(state){if(state===game)renderGame();else renderPuzzle();}
 function clickGameSquare(i){
- if(!isHumanTurn())return;
- const legal=getLegalMoves(game.board,game.side);
- if(game.active){if(destinations(game).includes(i))moveStep(game,i,finishGameMove);else toast('Finish the required jump sequence.');return;}
+ if(!isHumanTurn()||game.chainAnimating)return;
+ const legal=getLegalMoves(game.board,game.side,game.mandatoryCaptures);
+ if(game.active){if(destinations(game).includes(i))moveStep(game,i,finishGameMove);else toast('Same checker, same turn: tap a glowing capture destination.');return;}
  if(game.selected!==null&&destinations(game).includes(i)){moveStep(game,i,finishGameMove);return;}
  if(game.board[i]*game.side>0){
-  if(!legal.some(m=>m.from===i)){toast(legal.some(m=>m.captures.length)?'A capture is required. Choose a piece that can jump.':'That piece has no legal move.');return;}
+  if(!legal.some(m=>m.from===i)){toast(game.mandatoryCaptures&&legal.some(m=>m.captures.length)?'Mandatory capture is ON. Choose a piece that can jump.':'That piece has no legal move.');return;}
   startMove(game,i,legal);renderGame();return;
  }
  if(game.selected!==null){game.selected=null;game.candidates=[];renderGame();}
@@ -188,7 +210,7 @@ function clickGameSquare(i){
 function finishGameMove(m,ai=false){
  const played=game.side;game.logs.push({side:played,move:m,ai});game.moves++;game.lastMove={from:m.from,to:m.path[m.path.length-1]};
  game.side=-played;
- const won=gameWinner(game.board,game.side);
+ const won=gameWinner(game.board,game.side,game.mandatoryCaptures);
  game.winner=won;game.over=won!==0;
  renderGame();
  if(game.over){endMatch(won);return;}
@@ -200,12 +222,24 @@ function scheduleAi(){
  renderGame();
  setTimeout(()=>{
   if(token!==turnSerial||!isAiTurn())return;
-  let aiMove=aiChoose(game.board,game.side,game.difficulty);
+  const aiMove=aiChoose(game.board,game.side,game.difficulty,game.mandatoryCaptures);
   if(!aiMove)return;
   saveHistory();
-  game.board=applyMove(game.board,aiMove);
-  sound(aiMove.captures.length?'capture':'move');
-  finishGameMove(aiMove,true);
+  game.aiAnimating=true;
+  // Show each computer capture separately. Its entire chain is still one legal turn.
+  let at=aiMove.from,step=0;
+  function showNextJump(){
+   if(token!==turnSerial||!isAiTurn())return;
+   const to=aiMove.path[step],piece=game.board[at];
+   game.board[at]=0;
+   if(aiMove.captures.length)game.board[aiMove.captures[step]]=0;
+   game.board[to]=step===aiMove.path.length-1?promote(piece,row(to)):piece;
+   game.lastMove={from:at,to};at=to;step++;
+   sound(aiMove.captures.length?'capture':'move');
+   if(step<aiMove.path.length){renderGame();setTimeout(showNextJump,390);}
+   else{game.aiAnimating=false;finishGameMove(aiMove,true);}
+  }
+  showNextJump();
  },['master','champion'].includes(game.difficulty)?340:290);
 }
 function endMatch(winner,{resigned=false}={}){
@@ -222,8 +256,8 @@ function endMatch(winner,{resigned=false}={}){
 function resign(){if(!game||game.over)return;modal('Resign this match?','Resigning awards the game to your opponent. Resigned matches do not award XP.',[{label:'Keep playing',secondary:true,fn:()=>{}},{label:'Resign',fn:()=>{turnSerial++;game.winner=game.mode==='ai'?-game.playerSide:-game.side;game.over=true;endMatch(game.winner,{resigned:true});renderGame();}}],'⚑');}
 function requestHint(){if(!isHumanTurn()){toast('Hints are available on your turn.');return;}
  if(game.active){const d=destinations(game);game.hint=d[0];toast(`Continue your jump to ${xy(d[0])}.`);renderGame();return;}
- const legal=getLegalMoves(game.board,game.side);if(!legal.length)return;
- const m=aiChoose(game.board,game.side,'tactician');game.selected=m.from;game.candidates=legal.filter(x=>x.from===m.from);game.hint=m.path[0];renderGame();toast(`Try ${xy(m.from)} → ${xy(m.path[0])}${m.captures.length?' (capture)':''}.`);
+ const legal=getLegalMoves(game.board,game.side,game.mandatoryCaptures);if(!legal.length)return;
+ const m=aiChoose(game.board,game.side,'tactician',game.mandatoryCaptures);game.selected=m.from;game.candidates=legal.filter(x=>x.from===m.from);game.hint=m.path[0];renderGame();toast(`Try ${xy(m.from)} → ${xy(m.path[0])}${m.captures.length?' (capture)':''}.`);
 }
 function renderBoard(el,state,handler,opt={}){
  const fragment=document.createDocumentFragment(),flipped=!!opt.flipped,opts=destinations(state);
@@ -234,7 +268,7 @@ function renderBoard(el,state,handler,opt={}){
   if(i===selected)sq.classList.add('selected');
   if(last&&(i===last.from||i===last.to))sq.classList.add('last-move');
   if(i===state.hint)sq.classList.add('hint-square');
-  if(opts.includes(i))sq.classList.add('legal',state.active||((state.candidates||[]).some(m=>m.captures.length))?'capture':'normal');
+  if(opts.includes(i)){sq.classList.add('legal',state.active||((state.candidates||[]).some(m=>m.captures.length))?'capture':'normal');if(state.active)sq.classList.add('chain-target');}
   const pieceDescription=p?`${sideName(Math.sign(p))} ${Math.abs(p)===2?'king':'checker'}`:'empty';
   sq.setAttribute('aria-label',`${xy(i)}, ${pieceDescription}${opts.includes(i)?', available move':''}`);
   sq.setAttribute('role','gridcell');sq.dataset.index=i;
@@ -252,12 +286,18 @@ function renderGame(){if(!game)return;
  $('mode-ai').classList.toggle('active',ui.mode==='ai');$('mode-local').classList.toggle('active',ui.mode==='local');
  $('mode-ai').setAttribute('aria-pressed',String(ui.mode==='ai'));$('mode-local').setAttribute('aria-pressed',String(ui.mode==='local'));
  $('ai-options').classList.toggle('hidden',ui.mode==='local');$('difficulty').value=ui.difficulty;
+ $('mandatory-captures').checked=game.mandatoryCaptures; $('capture-rule-mode').textContent=game.mandatoryCaptures?'ON · Standard rules':'OFF · Casual rules';
  $('side-black').classList.toggle('active',ui.playerSide===1);$('side-red').classList.toggle('active',ui.playerSide===-1);
  $('side-black').setAttribute('aria-pressed',String(ui.playerSide===1));$('side-red').setAttribute('aria-pressed',String(ui.playerSide===-1));
  $('red-label').textContent=sideDisplay(-1);$('black-label').textContent=sideDisplay(1);
  $('black-count').textContent=pieceCount(game.board,1)+' pieces';$('red-count').textContent=pieceCount(game.board,-1)+' pieces';
- $('turn-status').textContent=game.over?`${sideName(game.winner)} wins!`:isAiTurn()?'Computer thinking…':`${sideName(game.side)} to move`;
- $('game-caption').textContent=game.active?'Complete every jump':game.over?'Match complete':getLegalMoves(game.board,game.side).some(m=>m.captures.length)?'A capture is required':'Select a checker to move';
+ $('jump-prompt').classList.toggle('hidden',!game.active);
+ if(game.active){
+  const squares=destinations(game).map(xy).join(' or ');
+  $('jump-prompt').textContent=game.chainAnimating?`Continuing the same turn automatically → ${squares}`:`Multi-jump: tap ${squares} to finish capturing with this same checker.`;
+ }
+ $('turn-status').textContent=game.over?`${sideName(game.winner)} wins!`:game.active?(game.chainAnimating?'Continuing your jump…':`${sideName(game.side)} · Continue jumping!`):game.aiAnimating?'Computer · Multi-jump in progress':isAiTurn()?'Computer thinking…':`${sideName(game.side)} to move`;
+ $('game-caption').textContent=game.active?(game.chainAnimating?`Jump ${game.active.step} complete · next jump automatic`:`Jump ${game.active.step} complete · tap the glowing landing square`):game.aiAnimating?'Computer continuing the same turn…':game.over?'Match complete':game.mandatoryCaptures&&getLegalMoves(game.board,game.side,true).some(m=>m.captures.length)?'A capture is required':getLegalMoves(game.board,game.side,true).some(m=>m.captures.length)?'Capture available · optional':'Select a checker to move';
  $('undo-btn').disabled=game.over||game.history.length===0;
  $('hint-btn').disabled=!isHumanTurn();$('resign-btn').disabled=game.over;
  $('move-counter').textContent=`MOVE ${String(Math.floor(game.moves/2)+1).padStart(2,'0')}`;
@@ -273,8 +313,9 @@ function renderGame(){if(!game)return;
  let tip='The middle squares give you more options. Look for safe ways to advance.';
  if(game.over)tip='Review the move history and consider one move you would change next time.';
  else if(isAiTurn())tip='Watch the computer move and look for a weakness in its next position.';
- else if(game.active)tip='You must finish all available jumps with the same piece.';
- else if(getLegalMoves(game.board,game.side).some(m=>m.captures.length))tip='A jump is available. American checkers requires you to capture.';
+ else if(game.active)tip=game.chainAnimating?'Only one legal jump remains, so it continues automatically. Your turn is not over.':'Multiple jumps are possible. Choose one of the highlighted landing squares with the same checker.';
+ else if(game.mandatoryCaptures&&getLegalMoves(game.board,game.side,true).some(m=>m.captures.length))tip='Mandatory captures are ON. You must jump when available; finish all jumps with that checker.';
+ else if(!game.mandatoryCaptures&&getLegalMoves(game.board,game.side,true).some(m=>m.captures.length))tip='Casual rules: you may jump or choose a regular move. Once jumping, complete the chain.';
  else if(game.moves>14)tip='In the middle game, look for trades that favor your position and routes to a king.';
  $('coach-tip').textContent=tip;
  renderStats();
@@ -405,6 +446,7 @@ function init(){
  $('mode-ai').addEventListener('click',()=>{ui.mode='ai';newGame();});
  $('mode-local').addEventListener('click',()=>{ui.mode='local';newGame();});
  $('difficulty').addEventListener('change',e=>{ui.difficulty=e.target.value;newGame();});
+ $('mandatory-captures').addEventListener('change',e=>{stats.mandatoryCaptures=e.target.checked;saveStats();newGame();toast(stats.mandatoryCaptures?'Mandatory captures ON · standard rules':'Mandatory captures OFF · optional jumps');});
  $('side-black').addEventListener('click',()=>{ui.playerSide=1;newGame();});
  $('side-red').addEventListener('click',()=>{ui.playerSide=-1;newGame();});
  $('new-game').addEventListener('click',newGame);

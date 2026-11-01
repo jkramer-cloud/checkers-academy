@@ -276,3 +276,19 @@ footer span {color:#e5bb69}
   .tool-button {font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* v1.1: accessible rules switch and clear multi-jump destinations */
+.capture-setting{padding:13px 14px;margin:13px 0 8px;border:1px solid #8c744a;border-radius:13px;background:linear-gradient(130deg,#182b40,#263e50);color:#f3e4bb}
+.capture-switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer}
+.capture-switch-row strong{display:block;font-size:13px;letter-spacing:.15px}
+.capture-switch-row small{display:block;font-size:11px;color:#e9c77f;padding-top:4px}
+.capture-switch-row input{width:22px;height:22px;accent-color:#dcb568;cursor:pointer;flex:none}
+.capture-setting p{font-size:11px;line-height:1.55;color:#c1c8d5;margin:8px 0 0}
+.square.legal.chain-target{outline:3px solid #ffdb74;outline-offset:-5px;animation:chainFlash 1.1s ease-in-out infinite}
+@keyframes chainFlash{0%,100%{box-shadow:inset 0 0 0 3px #fff1a5,0 0 7px #ffd56266}50%{box-shadow:inset 0 0 0 5px #fff1a5,0 0 18px #ffd562aa}}
+@media(prefers-reduced-motion:reduce){.square.legal.chain-target{animation:none;outline:4px solid #ffe395}}
+
+/* v1.2: make edge and chained captures clearly readable on touchscreens. */
+.jump-prompt{margin:8px 0 12px;padding:12px 14px;text-align:center;background:#143d47;color:#fff2bd;border:2px solid #e7bd69;border-radius:11px;font-weight:900;font-size:13px;box-shadow:0 0 0 2px #102535,0 5px 15px #0005}
+.square.legal.chain-target{z-index:1;outline:4px solid #ffda73;outline-offset:-5px}
+@media(max-width:620px){.jump-prompt{font-size:12px;padding:10px 6px}.square.legal.chain-target{outline-width:3px;outline-offset:-3px}}
